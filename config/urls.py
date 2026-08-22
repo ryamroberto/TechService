@@ -1,0 +1,29 @@
+"""
+URL configuration for TechService project.
+"""
+
+from django.contrib import admin
+from django.urls import path
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
+
+from config.views import HealthCheckView
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    # Rota pública de saúde
+    path("api/health/", HealthCheckView.as_view(), name="health-check"),
+    # Documentação OpenAPI
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/docs/swagger/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "api/docs/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"
+    ),
+]
