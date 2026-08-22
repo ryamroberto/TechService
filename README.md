@@ -6,7 +6,7 @@ API REST para gerenciamento de clientes, equipamentos e ordens de serviço de um
 
 ## 📌 Visão Geral
 
-A **TechService API** é desenvolvida em Python com Django e Django REST Framework (DRF), seguindo uma arquitetura de monólito modular. Nesta primeira etapa (Story 1.1), a API disponibiliza a fundação executável do projeto, a rota pública de verificação de integridade (*health check*), a suíte inicial de testes e as instruções de desenvolvimento local. A autenticação por token e os domínios de negócio serão implementados nas stories subsequentes.
+A **TechService API** é desenvolvida em Python com Django e Django REST Framework (DRF), seguindo uma arquitetura de monólito modular. Nesta primeira etapa (Épico 1), a API disponibiliza a fundação executável do projeto, a rota pública de verificação de integridade (*health check*), autenticação por token, a suíte inicial de testes e as instruções de desenvolvimento local. Os domínios de negócio serão implementados nas stories subsequentes.
 
 ---
 
@@ -80,6 +80,38 @@ python manage.py migrate
 ```bash
 python manage.py createsuperuser
 ```
+
+## 🔐 Autenticação por Token
+
+Crie um usuário local usando o comando administrativo do Django:
+
+```bash
+python manage.py createsuperuser
+```
+
+Com a API em execução, obtenha um token enviando o usuário e a senha para a rota pública:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/auth/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"atendente","password":"sua-senha"}'
+```
+
+Resposta esperada:
+
+```json
+{
+  "token": "0123456789abcdef..."
+}
+```
+
+Use o token para acessar os endpoints de negócio protegidos:
+
+```text
+Authorization: Token <token>
+```
+
+As senhas são armazenadas pelo hash padrão do Django e nunca são retornadas pela API. A rota `GET /api/health/` e a rota de obtenção de token permanecem públicas.
 
 ---
 

@@ -10,12 +10,14 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-from config.views import HealthCheckView
+from config.views import HealthCheckView, TokenObtainView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     # Rota pública de saúde
     path("api/health/", HealthCheckView.as_view(), name="health-check"),
+    # Rota pública para obtenção de token
+    path("api/auth/token/", TokenObtainView.as_view(), name="api-token-auth"),
     # Documentação OpenAPI
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

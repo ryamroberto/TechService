@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-party apps aprovadas no Tech Stack
     "rest_framework",
+    "rest_framework.authtoken",
     "drf_spectacular",
 ]
 
@@ -119,6 +120,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Django REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.TokenAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
 }
 
 # drf-spectacular settings
@@ -127,4 +132,15 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API para controle de clientes, equipamentos e ordens de serviço.",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SECURITY": [{"TokenAuth": []}],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "TokenAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": 'Use o formato "Token <token>".',
+            }
+        }
+    },
 }
