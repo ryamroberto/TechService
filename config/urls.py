@@ -3,7 +3,7 @@ URL configuration for TechService project.
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -18,6 +18,8 @@ urlpatterns = [
     path("api/health/", HealthCheckView.as_view(), name="health-check"),
     # Rota pública para obtenção de token
     path("api/auth/token/", TokenObtainView.as_view(), name="api-token-auth"),
+    # Rotas protegidas de clientes
+    path("api/customers/", include("apps.customers.urls")),
     # Documentação OpenAPI
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

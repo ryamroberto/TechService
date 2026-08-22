@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "drf_spectacular",
+    "apps.customers",
 ]
 
 MIDDLEWARE = [
@@ -132,7 +133,6 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API para controle de clientes, equipamentos e ordens de serviço.",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    "SECURITY": [{"TokenAuth": []}],
     "APPEND_COMPONENTS": {
         "securitySchemes": {
             "TokenAuth": {

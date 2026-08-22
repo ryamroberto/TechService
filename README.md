@@ -6,7 +6,7 @@ API REST para gerenciamento de clientes, equipamentos e ordens de serviço de um
 
 ## 📌 Visão Geral
 
-A **TechService API** é desenvolvida em Python com Django e Django REST Framework (DRF), seguindo uma arquitetura de monólito modular. Nesta primeira etapa (Épico 1), a API disponibiliza a fundação executável do projeto, a rota pública de verificação de integridade (*health check*), autenticação por token, a suíte inicial de testes e as instruções de desenvolvimento local. Os domínios de negócio serão implementados nas stories subsequentes.
+A **TechService API** é desenvolvida em Python com Django e Django REST Framework (DRF), seguindo uma arquitetura de monólito modular. Nesta primeira etapa, a API disponibiliza a fundação executável do projeto, autenticação por token e o cadastro protegido de clientes, além da suíte inicial de testes e das instruções de desenvolvimento local. Os demais domínios de negócio serão implementados nas stories subsequentes.
 
 ---
 
@@ -112,6 +112,42 @@ Authorization: Token <token>
 ```
 
 As senhas são armazenadas pelo hash padrão do Django e nunca são retornadas pela API. A rota `GET /api/health/` e a rota de obtenção de token permanecem públicas.
+
+---
+
+## 👥 Clientes
+
+As operações de clientes exigem o header `Authorization: Token <token>`.
+
+### Criar cliente
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/customers/ \
+  -H "Authorization: Token <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Maria da Silva","phone":"(11) 99999-9999","email":"maria@example.com"}'
+```
+
+### Listar clientes
+
+```bash
+curl http://127.0.0.1:8000/api/customers/ \
+  -H "Authorization: Token <token>"
+```
+
+### Consultar ou atualizar um cliente
+
+```bash
+curl http://127.0.0.1:8000/api/customers/1/ \
+  -H "Authorization: Token <token>"
+
+curl -X PATCH http://127.0.0.1:8000/api/customers/1/ \
+  -H "Authorization: Token <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"(11) 98888-8888"}'
+```
+
+O e-mail é opcional, mas precisa estar em formato válido quando informado. A API não implementa exclusão de clientes no MVP.
 
 ---
 
