@@ -151,6 +151,49 @@ O e-mail é opcional, mas precisa estar em formato válido quando informado. A A
 
 ---
 
+## 💻 Equipamentos
+
+As operações de equipamentos exigem o header `Authorization: Token <token>` e vinculam cada aparelho a um cliente existente.
+
+### Criar equipamento
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/equipment/ \
+  -H "Authorization: Token <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id": 1, "type": "Celular", "brand": "Samsung", "model": "Galaxy A54", "identifier": "IMEI-123456789"}'
+```
+
+### Listar equipamentos (todos ou filtrados por cliente)
+
+```bash
+# Listar todos os equipamentos
+curl http://127.0.0.1:8000/api/equipment/ \
+  -H "Authorization: Token <token>"
+
+# Filtrar equipamentos por ID do cliente
+curl "http://127.0.0.1:8000/api/equipment/?customer_id=1" \
+  -H "Authorization: Token <token>"
+```
+
+### Consultar ou atualizar um equipamento
+
+```bash
+# Consultar por ID
+curl http://127.0.0.1:8000/api/equipment/1/ \
+  -H "Authorization: Token <token>"
+
+# Atualizar parcialmente com PATCH
+curl -X PATCH http://127.0.0.1:8000/api/equipment/1/ \
+  -H "Authorization: Token <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "Galaxy A54 5G", "identifier": "SN-NEW-987"}'
+```
+
+O campo `identifier` é opcional. A descrição do problema não pertence ao equipamento (será registrada na ordem de serviço). A API não implementa exclusão de equipamentos no MVP.
+
+---
+
 ## ▶️ Executando a API
 
 Inicie o servidor de desenvolvimento:

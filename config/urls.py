@@ -20,6 +20,8 @@ urlpatterns = [
     path("api/auth/token/", TokenObtainView.as_view(), name="api-token-auth"),
     # Rotas protegidas de clientes
     path("api/customers/", include("apps.customers.urls")),
+    # Rotas protegidas de equipamentos
+    path("api/equipment/", include("apps.equipment.urls")),
     # Documentação OpenAPI
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
