@@ -422,3 +422,306 @@ class ServiceOrderAPITests(APITestCase):
         self.assertIn("401", patch_op["responses"])
         self.assertIn("404", patch_op["responses"])
         self.assertEqual(patch_op["security"], [{"TokenAuth": []}])
+
+    def test_list_service_orders_success(self):
+        """Lista todas as ordens de serviço cadastradas ordenadas por -created_at e -id."""
+        so1 = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Primeiro atendimento.",
+            status=ServiceOrderStatus.RECEBIDO,
+        )
+        so2 = ServiceOrder.objects.create(
+            customer=self.customer_2,
+            equipment=self.equipment_2,
+            problem_description="Segundo atendimento.",
+            status=ServiceOrderStatus.EM_DIAGNOSTICO,
+        )
+
+        url = reverse("service-order-list-create")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
+        self.assertEqual(len(response.data), 2)
+        # Ordem padrão: so2 (mais recente), depois so1
+        self.assertEqual(response.data[0]["id"], so2.id)
+        self.assertEqual(response.data[1]["id"], so1.id)
+        self.assertIn("customer_id", response.data[0])
+        self.assertIn("equipment_id", response.data[0])
+        self.assertIn("problem_description", response.data[0])
+        self.assertIn("status", response.data[0])
+        self.assertIn("diagnosis", response.data[0])
+        self.assertIn("estimated_budget", response.data[0])
+        self.assertIn("notes", response.data[0])
+        self.assertIn("created_at", response.data[0])
+        self.assertIn("updated_at", response.data[0])
+
+    def test_list_service_orders_filter_by_customer_id(self):
+        """Filtra a listagem de ordens de serviço por customer_id."""
+        so1 = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Ordem cliente 1.",
+        )
+        ServiceOrder.objects.create(
+            customer=self.customer_2,
+            equipment=self.equipment_2,
+            problem_description="Ordem cliente 2.",
+        )
+
+        url = f"{reverse('service-order-list-create')}?customer_id={self.customer_1.id}"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], so1.id)
+        self.assertEqual(response.data[0]["customer_id"], self.customer_1.id)
+
+    def test_list_service_orders_filter_by_status(self):
+        """Filtra a listagem de ordens de serviço por status."""
+        so1 = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Ordem em conserto.",
+            status=ServiceOrderStatus.EM_CONSERTO,
+        )
+        ServiceOrder.objects.create(
+            customer=self.customer_2,
+            equipment=self.equipment_2,
+            problem_description="Ordem recebida.",
+            status=ServiceOrderStatus.RECEBIDO,
+        )
+
+        url = f"{reverse('service-order-list-create')}?status=em_conserto"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], so1.id)
+        self.assertEqual(response.data[0]["status"], "em_conserto")
+
+    def test_list_service_orders_filter_by_customer_and_status(self):
+        """Combina filtros por customer_id e status."""
+        so1 = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Ordem 1 cliente 1 entregue.",
+            status=ServiceOrderStatus.ENTREGUE,
+        )
+        ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Ordem 2 cliente 1 recebido.",
+            status=ServiceOrderStatus.RECEBIDO,
+        )
+        ServiceOrder.objects.create(
+            customer=self.customer_2,
+            equipment=self.equipment_2,
+            problem_description="Ordem cliente 2 entregue.",
+            status=ServiceOrderStatus.ENTREGUE,
+        )
+
+        url = f"{reverse('service-order-list-create')}?customer_id={self.customer_1.id}&status=entregue"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], so1.id)
+        self.assertEqual(response.data[0]["customer_id"], self.customer_1.id)
+        self.assertEqual(response.data[0]["status"], "entregue")
+
+    def test_list_service_orders_includes_closed_orders_without_filter(self):
+        """Garante que a listagem sem filtros inclui ordens com status entregue e cancelado."""
+        so1 = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Ordem ativa.",
+            status=ServiceOrderStatus.EM_CONSERTO,
+        )
+        so2 = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Ordem entregue.",
+            status=ServiceOrderStatus.ENTREGUE,
+        )
+        so3 = ServiceOrder.objects.create(
+            customer=self.customer_2,
+            equipment=self.equipment_2,
+            problem_description="Ordem cancelada.",
+            status=ServiceOrderStatus.CANCELADO,
+        )
+
+        url = reverse("service-order-list-create")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+        retrieved_ids = [item["id"] for item in response.data]
+        self.assertIn(so1.id, retrieved_ids)
+        self.assertIn(so2.id, retrieved_ids)
+        self.assertIn(so3.id, retrieved_ids)
+
+    def test_list_service_orders_invalid_customer_id_filter_fails(self):
+        """Rejeita filtro customer_id não numérico com HTTP 400."""
+        url = f"{reverse('service-order-list-create')}?customer_id=abc"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("errors", response.data)
+        self.assertIn("customer_id", response.data["errors"])
+
+    def test_list_service_orders_invalid_status_filter_fails(self):
+        """Rejeita filtro status inválido com HTTP 400."""
+        url = f"{reverse('service-order-list-create')}?status=status_invalido"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("errors", response.data)
+        self.assertIn("status", response.data["errors"])
+
+    def test_list_service_orders_unauthenticated_fails(self):
+        """Rejeita listagem sem token com HTTP 401 Unauthorized."""
+        self.client.credentials()
+        url = reverse("service-order-list-create")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_retrieve_service_order_detail_success(self):
+        """Consulta os dados completos de uma ordem existente."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Troca de bateria.",
+            status=ServiceOrderStatus.EM_DIAGNOSTICO,
+            diagnosis="Bateria inchada.",
+            estimated_budget="150.00",
+            notes="Avisar cliente via WhatsApp.",
+        )
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], so.id)
+        self.assertEqual(response.data["customer_id"], self.customer_1.id)
+        self.assertEqual(response.data["equipment_id"], self.equipment_1.id)
+        self.assertEqual(response.data["problem_description"], "Troca de bateria.")
+        self.assertEqual(response.data["status"], "em_diagnostico")
+        self.assertEqual(response.data["diagnosis"], "Bateria inchada.")
+        self.assertEqual(response.data["estimated_budget"], "150.00")
+        self.assertEqual(response.data["notes"], "Avisar cliente via WhatsApp.")
+        self.assertIn("created_at", response.data)
+        self.assertIn("updated_at", response.data)
+
+    def test_retrieve_service_order_detail_nonexistent_fails(self):
+        """Retorna HTTP 404 quando o identificador da ordem não existe."""
+        url = reverse("service-order-detail", kwargs={"pk": 999999})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("detail", response.data)
+
+    def test_retrieve_service_order_detail_unauthenticated_fails(self):
+        """Rejeita consulta sem token com HTTP 401 Unauthorized."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Sem imagem.",
+        )
+        self.client.credentials()
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_close_service_order_as_entregue_success(self):
+        """Encerra a ordem marcando status como entregue via PATCH e mantém consultável."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Troca de tela.",
+            status=ServiceOrderStatus.PRONTO,
+            diagnosis="Tela trocada com sucesso.",
+            estimated_budget="400.00",
+            notes="Garantia de 90 dias.",
+        )
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        response = self.client.patch(url, {"status": "entregue"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "entregue")
+        self.assertEqual(response.data["diagnosis"], "Tela trocada com sucesso.")
+        self.assertEqual(response.data["estimated_budget"], "400.00")
+        self.assertEqual(response.data["notes"], "Garantia de 90 dias.")
+
+        # Valida que permanece consultável por GET detail
+        get_response = self.client.get(url)
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(get_response.data["status"], "entregue")
+
+        # Valida que permanece visível na listagem
+        list_url = reverse("service-order-list-create")
+        list_response = self.client.get(list_url)
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
+        self.assertTrue(any(item["id"] == so.id for item in list_response.data))
+
+    def test_close_service_order_as_cancelado_success(self):
+        """Encerra a ordem marcando status como cancelado via PATCH e mantém consultável."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Troca de placa-mãe.",
+            status=ServiceOrderStatus.AGUARDANDO_APROVACAO,
+            diagnosis="Orçamento não aprovado pelo cliente.",
+            estimated_budget="900.00",
+        )
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        payload = {
+            "status": "cancelado",
+            "notes": "Cliente optou por não realizar o serviço.",
+        }
+        response = self.client.patch(url, payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "cancelado")
+        self.assertEqual(
+            response.data["notes"], "Cliente optou por não realizar o serviço."
+        )
+
+        # Valida persistência
+        so.refresh_from_db()
+        self.assertEqual(so.status, ServiceOrderStatus.CANCELADO)
+        self.assertEqual(so.notes, "Cliente optou por não realizar o serviço.")
+
+        # Valida permanência na consulta
+        get_response = self.client.get(url)
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(get_response.data["status"], "cancelado")
+
+    def test_openapi_schema_contains_list_and_detail_service_orders(self):
+        """Valida que o OpenAPI documenta GET list com parâmetros e GET detail."""
+        schema_url = reverse("schema")
+        response = self.client.get(schema_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        schema_data = response.data
+
+        # GET /api/service-orders/
+        self.assertIn("/api/service-orders/", schema_data["paths"])
+        get_list_op = schema_data["paths"]["/api/service-orders/"]["get"]
+        self.assertEqual(get_list_op["summary"], "Listar ordens de serviço")
+        self.assertIn("200", get_list_op["responses"])
+        self.assertIn("400", get_list_op["responses"])
+        self.assertIn("401", get_list_op["responses"])
+        param_names = [p["name"] for p in get_list_op.get("parameters", [])]
+        self.assertIn("customer_id", param_names)
+        self.assertIn("status", param_names)
+
+        # GET /api/service-orders/{id}/
+        self.assertIn("/api/service-orders/{id}/", schema_data["paths"])
+        get_detail_op = schema_data["paths"]["/api/service-orders/{id}/"]["get"]
+        self.assertEqual(get_detail_op["summary"], "Consultar ordem de serviço")
+        self.assertIn("200", get_detail_op["responses"])
+        self.assertIn("401", get_detail_op["responses"])
+        self.assertIn("404", get_detail_op["responses"])

@@ -263,6 +263,56 @@ curl -X PATCH http://127.0.0.1:8000/api/service-orders/1/ \
 
 A atualização é parcial e aceita os campos `status`, `diagnosis`, `estimated_budget` e `notes`. Os campos de vínculo (`customer_id`, `equipment_id`) e a descrição do problema (`problem_description`) são imutáveis após a abertura.
 
+### Listar ordens de serviço (com filtros opcionais)
+
+```bash
+# Listar todas as ordens (ordenadas pelas mais recentes)
+curl http://127.0.0.1:8000/api/service-orders/ \
+  -H "Authorization: Token <token>"
+
+# Filtrar por cliente
+curl "http://127.0.0.1:8000/api/service-orders/?customer_id=1" \
+  -H "Authorization: Token <token>"
+
+# Filtrar por status
+curl "http://127.0.0.1:8000/api/service-orders/?status=em_conserto" \
+  -H "Authorization: Token <token>"
+
+# Combinar filtros de cliente e status
+curl "http://127.0.0.1:8000/api/service-orders/?customer_id=1&status=entregue" \
+  -H "Authorization: Token <token>"
+```
+
+### Consultar ordem de serviço por ID
+
+```bash
+curl http://127.0.0.1:8000/api/service-orders/1/ \
+  -H "Authorization: Token <token>"
+```
+
+### Encerrar ordem de serviço
+
+Para encerrar uma ordem, envie um `PATCH` definindo o `status` como `entregue` ou `cancelado`:
+
+```bash
+# Marcar como entregue ao cliente
+curl -X PATCH http://127.0.0.1:8000/api/service-orders/1/ \
+  -H "Authorization: Token <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"entregue"}'
+
+# Cancelar atendimento com justificativa nas observações
+curl -X PATCH http://127.0.0.1:8000/api/service-orders/1/ \
+  -H "Authorization: Token <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "cancelado",
+    "notes": "Cliente optou por não aprovar o orçamento."
+  }'
+```
+
+Ordens encerradas (`entregue` ou `cancelado`) permanecem registradas e disponíveis para consulta detalhada e listagem.
+
 ---
 
 ## ▶️ Executando a API
