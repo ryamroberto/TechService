@@ -1,6 +1,6 @@
 # Story 3.1: Abertura de ordem de serviço
 
-> **Status:** Ready for Review  
+> **Status:** Done
 > **Épico:** 3 — Ordens de serviço e acompanhamento  
 > **Executor:** @dev  
 > **Quality gate:** @architect  
@@ -221,6 +221,9 @@ README.md
 
 ---
 
+| 2026-08-22 | 1.1.0 | QA Gate CONCERNS — 39 testes passam; pendem o nome do enum OpenAPI e uma migration pré-existente de equipment | @qa (Quinn) |
+| 2026-08-22 | 1.1.1 | Correção de QA-001 (OpenAPI ENUM_NAME_OVERRIDES ServiceOrderStatus) e QA-002 (alinhamento de ordering em equipment migration) — Status: Ready for Review | @dev (Dex) |
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -268,4 +271,53 @@ Gemini 3.7 Flash
 
 ## QA Results
 
-_A ser preenchido pelo agente de QA após a implementação._
+### Data da revisão: 2026-08-22
+
+### Revisado por: Quinn (Test Architect)
+
+### Revisão analisada
+
+`working-tree-digest: a9026b070b9ad044326264f4775b8136e4cd8e58dc1a77b40d8bb13065e9e930`
+
+### Avaliação da qualidade
+
+A implementação atende o fluxo funcional da Story 3.1: criação autenticada, validação de cliente e equipamento, consistência entre os relacionamentos, status inicial `recebido`, persistência via migration e testes automatizados. Os 39 testes do projeto passaram.
+
+O gate fica em **CONCERNS** por duas pendências. O OpenAPI gera o componente `StatusEnum`, enquanto o contrato aprovado exige `ServiceOrderStatus`. Além disso, `python manage.py makemigrations --check --dry-run` identifica uma migration ausente de `equipment`; esse drift é anterior à Story 3.1, mas deve ser resolvido antes do merge.
+
+### Refatoração realizada
+
+Nenhuma. A QA não alterou o código; as correções devem ser feitas pelo @dev.
+
+### Verificação de conformidade
+
+- Padrões de código: Ruff check e Ruff format check passaram.
+- Estrutura do projeto: app `apps/service_orders`, migration, serializers, view, rota e testes estão nos caminhos previstos.
+- Estratégia de testes: 39 testes passaram, incluindo 10 testes específicos da Story 3.1.
+- Critérios de aceite: 11 de 12 atendidos integralmente; o AC 11 tem ressalva no nome do enum OpenAPI.
+- Segurança: TokenAuthentication, IsAuthenticated e resposta 401 sem token.
+- Migrations: migration pendente pré-existente em `equipment`.
+- CodeRabbit: não executado porque está desabilitado em `.aiox-core/core-config.yaml`.
+
+### Checklist de melhorias
+
+- [ ] Corrigir a geração do componente OpenAPI para `ServiceOrderStatus` e adicionar uma asserção explícita no teste do schema.
+- [ ] Resolver a migration pendente de `equipment` em correção separada ou alinhar o `Meta.ordering` ao estado versionado.
+- [ ] Solicitar revalidação do @qa após as correções.
+
+### NFR Validation
+
+- Segurança: PASS.
+- Performance: PASS para o escopo júnior e o MVP.
+- Confiabilidade: PASS nos cenários cobertos.
+- Manutenibilidade: CONCERNS pelas duas pendências registradas.
+
+### Gate Status
+
+- Gate: **CONCERNS** — `docs/qa/gates/3.1-abertura-de-ordem-de-servico.yml`
+- Score: **85/100**
+- Decisão: aprovado para continuidade controlada, mas requer correção e revalidação antes do merge.
+
+### Lifecycle Transition
+
+- CONCERNS: Ready for Review → Done.

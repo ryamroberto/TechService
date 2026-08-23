@@ -1,0 +1,78 @@
+schema: 1
+story: '3.1'
+story_title: 'Abertura de ordem de servico'
+gate: CONCERNS
+status_reason: 'A implementacao atende o fluxo funcional da Story 3.1 e os 39 testes passam. Permanecem duas ressalvas: o schema OpenAPI gerado chama o enum de StatusEnum, enquanto o contrato aprovado exige ServiceOrderStatus, e a verificacao de migrations identifica uma alteracao pendente pre-existente em equipment.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree-digest: a9026b070b9ad044326264f4775b8136e4cd8e58dc1a77b40d8bb13065e9e930'
+updated: '2026-08-22T21:00:00-03:00'
+
+top_issues:
+  - id: QA-001
+    severity: medium
+    category: contract
+    description: 'O OpenAPI documenta o enum de status como StatusEnum; o contrato da arquitetura e o AC 11 exigem o componente ServiceOrderStatus.'
+    location: ['apps/service_orders/models.py', 'apps/service_orders/serializers.py', 'docs/architecture.md']
+    remediation: 'Ajustar a configuracao do drf-spectacular ou a declaracao do campo para gerar o componente ServiceOrderStatus e adicionar uma assercao do nome no teste do schema.'
+    suggested_owner: dev
+  - id: QA-002
+    severity: medium
+    category: maintainability
+    description: 'python manage.py makemigrations --check --dry-run acusa a migration ausente apps/equipment/migrations/0002_alter_equipment_options.py. O drift e anterior a Story 3.1 e nao foi introduzido pelos arquivos desta story.'
+    location: ['apps/equipment/models.py', 'apps/equipment/migrations/0001_initial.py']
+    remediation: 'Gerar e versionar a migration de equipment em uma correcao separada, ou alinhar o Meta.ordering ao estado ja versionado; depois repetir o gate.'
+    suggested_owner: dev
+
+waiver:
+  active: false
+
+quality_score: 85
+expires: '2026-09-05T23:59:59-03:00'
+
+evidence:
+  tests_reviewed: 39
+  risks_identified: 2
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12]
+    ac_gaps: [11]
+  commands:
+    - command: 'python -m ruff check .'
+      result: PASS
+      detail: 'All checks passed'
+    - command: 'python -m ruff format --check .'
+      result: PASS
+      detail: '55 arquivos ja formatados'
+    - command: 'python manage.py check'
+      result: PASS
+      detail: 'Nenhum problema identificado'
+    - command: 'python manage.py makemigrations --check --dry-run'
+      result: CONCERNS
+      detail: 'Migration pendente de equipment: 0002_alter_equipment_options.py'
+    - command: 'python manage.py test'
+      result: PASS
+      detail: '39 testes executados com sucesso; 10 testes especificos de service_orders'
+    - command: 'python manage.py spectacular --validate'
+      result: PASS
+      detail: 'OpenAPI 3.0.3 valido; endpoint e schemas funcionais presentes, mas o enum foi nomeado StatusEnum'
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'POST /api/service-orders/ usa TokenAuthentication e IsAuthenticated; o teste sem token retorna 401.'
+  performance:
+    status: PASS
+    notes: 'O MVP usa ORM direto, duas referencias por chave primaria e validacao simples do relacionamento, sem riscos relevantes para o escopo junior.'
+  reliability:
+    status: PASS
+    notes: 'Testes cobrem criacao valida, referencias inexistentes, descricao invalida, equipamento de outro cliente, ausencia de persistencia, status inicial e protecao PROTECT.'
+  maintainability:
+    status: CONCERNS
+    notes: 'Ruff passa, mas ha drift de migration em equipment e o nome do enum OpenAPI nao esta alinhado ao contrato aprovado.'
+
+recommendations:
+  immediate:
+    - action: 'Corrigir o nome do componente de enum no contrato OpenAPI e adicionar teste explicito para ServiceOrderStatus.'
+      refs: ['apps/service_orders/serializers.py', 'apps/service_orders/tests.py', 'docs/architecture.md']
+    - action: 'Resolver a migration pendente de equipment antes do merge da proxima entrega.'
+      refs: ['apps/equipment/models.py', 'apps/equipment/migrations']
+  future: []

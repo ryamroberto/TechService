@@ -135,6 +135,9 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API para controle de clientes, equipamentos e ordens de serviço.",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {
+        "ServiceOrderStatus": "apps.service_orders.models.ServiceOrderStatus",
+    },
     "APPEND_COMPONENTS": {
         "securitySchemes": {
             "TokenAuth": {

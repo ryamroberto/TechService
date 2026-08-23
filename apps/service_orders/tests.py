@@ -190,6 +190,7 @@ class ServiceOrderAPITests(APITestCase):
         self.assertIn("/api/service-orders/", schema_data["paths"])
         self.assertIn("ServiceOrder", schema_data["components"]["schemas"])
         self.assertIn("ServiceOrderInput", schema_data["components"]["schemas"])
+        self.assertIn("ServiceOrderStatus", schema_data["components"]["schemas"])
 
     def test_service_order_str_representation(self):
         """Valida a representação em string do modelo ServiceOrder."""

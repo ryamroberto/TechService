@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 "db_table": "equipment",
-                "ordering": ["id"],
+                "ordering": ("id",),
             },
         ),
     ]
