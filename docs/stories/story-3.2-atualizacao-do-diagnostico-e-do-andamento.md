@@ -1,6 +1,6 @@
 # Story 3.2: Atualização do diagnóstico e do andamento
 
-> **Status:** Ready for Review  
+> **Status:** Done
 > **Épico:** 3 — Ordens de serviço e acompanhamento  
 > **Executor:** @dev  
 > **Quality gate:** @architect  
@@ -208,6 +208,7 @@ Não se espera alteração de `models.py` ou migration nesta story, pois os camp
 | 2026-08-23 | 0.1.0 | Criação da Story 3.2 com base no PRD e na arquitetura aprovada | @sm (River) |
 | 2026-08-23 | 0.2.0 | Validated GO (8/10) — Status: Draft → Ready; recomendada confirmação do schema de request PATCH pelo @architect | @po (Pax) |
 | 2026-08-23 | 1.0.0 | Implementação da atualização parcial de ordens de serviço (PATCH), testes e documentação — Status: Ready for Review | @dev (Dex) |
+| 2026-08-23 | 1.1.0 | QA Gate PASS — 48 testes, migrations, Ruff e OpenAPI aprovados; Status: Ready for Review → Done | @qa (Quinn) |
 
 ---
 
@@ -249,4 +250,48 @@ Gemini 3.7 Flash
 
 ## QA Results
 
-_A ser preenchido pelo @qa após a implementação._
+### Data da revisão: 2026-08-23
+
+### Revisado por: Quinn (Test Architect)
+
+### Revisão analisada
+
+`working-tree-digest: 2982333c2f5a4f23ceb207725e2ae24c9e693cbd8633f05a315143d71d3b52ca`
+
+### Avaliação da qualidade
+
+A implementação atende os 12 critérios da Story 3.2. A rota `PATCH /api/service-orders/{id}/` está protegida, atualiza parcialmente os campos de andamento, preserva cliente, equipamento e descrição do problema, valida status e orçamento e documenta o contrato OpenAPI.
+
+Foram executados 48 testes na suíte completa, incluindo 19 testes do app `service_orders`, todos aprovados. Também passaram Django check, verificação de migrations, Ruff e validação OpenAPI.
+
+### Verificação de conformidade
+
+- Padrões de código: Ruff check e Ruff format check passaram.
+- Estrutura do projeto: implementação mantida em `apps/service_orders/`, sem camadas artificiais.
+- Critérios de aceite: 12 de 12 atendidos.
+- Testes: atualização completa, parcial, campos imutáveis, status inválido, orçamento negativo, campos nulos, 404, 401 e OpenAPI cobertos.
+- Segurança: TokenAuthentication e IsAuthenticated aplicados ao PATCH.
+- Migrations: `No changes detected`.
+- OpenAPI: endpoint PATCH, `PatchedServiceOrderUpdateInput`, `ServiceOrder`, `ServiceOrderStatus` e `TokenAuth` presentes.
+- CodeRabbit: não executado porque está desabilitado em `.aiox-core/core-config.yaml`.
+
+### Recomendação documental
+
+O Dev Agent Record informa 47 testes, enquanto a revalidação observou 48 testes. Isso não afeta o código ou o gate, mas o registro pode ser ajustado para manter a documentação exata.
+
+### NFR Validation
+
+- Segurança: PASS.
+- Performance: PASS para o escopo júnior e o MVP.
+- Confiabilidade: PASS.
+- Manutenibilidade: PASS.
+
+### Gate Status
+
+- Gate: **PASS** — `docs/qa/gates/3.2-atualizacao-do-diagnostico-e-do-andamento.yml`
+- Score: **100/100**
+- Decisão: aprovado.
+
+### Lifecycle Transition
+
+- PASS: Ready for Review → Done.
