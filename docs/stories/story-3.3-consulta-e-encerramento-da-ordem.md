@@ -229,6 +229,7 @@ Não se espera alteração de `models.py` ou criação de migration nesta story,
 | 2026-08-23 | 0.1.1 | Validated GO (9/10) — Status: Draft → Ready; quality gate alinhado para @architect | @po (Pax) |
 | 2026-08-23 | 1.0.0 | Implementação de listagem, filtros, consulta detalhada e encerramento de ordens de serviço (GET/PATCH), testes e documentação — Status: Ready for Review | @dev (Dex) |
 | 2026-08-23 | 1.1.0 | QA Gate PASS — 62 testes, migrations, Ruff e OpenAPI aprovados; Status: Ready for Review → Done | @qa (Quinn) |
+| 2026-08-23 | 1.1.1 | Fechamento administrativo após QA PASS; Story permanece Done e o MVP do Épico 3 está concluído. [closure-key: 3.3:commit:4d6be2e91235140b6c203134271f508f34d3939a] | @po (Pax) |
 
 ---
 
