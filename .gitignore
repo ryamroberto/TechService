@@ -62,3 +62,8 @@ coverage.xml
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# AIOX & Agent runtime artifacts
+.aiox-core/
+.ai/
+.agents/
