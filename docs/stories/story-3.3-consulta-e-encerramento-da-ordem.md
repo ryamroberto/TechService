@@ -1,6 +1,6 @@
 # Story 3.3: Consulta e encerramento da ordem
 
-> **Status:** Ready for Review
+> **Status:** Done
 > **Épico:** 3 — Ordens de serviço e acompanhamento
 > **Executor:** @dev
 > **Quality gate:** @architect
@@ -228,6 +228,7 @@ Não se espera alteração de `models.py` ou criação de migration nesta story,
 | 2026-08-23 | 0.1.0 | Criação da Story 3.3 com base no PRD e na arquitetura aprovada | @sm (River) |
 | 2026-08-23 | 0.1.1 | Validated GO (9/10) — Status: Draft → Ready; quality gate alinhado para @architect | @po (Pax) |
 | 2026-08-23 | 1.0.0 | Implementação de listagem, filtros, consulta detalhada e encerramento de ordens de serviço (GET/PATCH), testes e documentação — Status: Ready for Review | @dev (Dex) |
+| 2026-08-23 | 1.1.0 | QA Gate PASS — 62 testes, migrations, Ruff e OpenAPI aprovados; Status: Ready for Review → Done | @qa (Quinn) |
 
 ---
 
@@ -269,4 +270,48 @@ Gemini 3.7 Flash
 
 ## QA Results
 
-_A preencher pelo @qa após a implementação e execução dos quality gates._
+### Data da revisão: 2026-08-23
+
+### Revisado por: Quinn (Test Architect)
+
+### Revisão analisada
+
+`commit:4d6be2e91235140b6c203134271f508f34d3939a`
+
+### Avaliação da qualidade
+
+A implementação atende aos 12 critérios da Story 3.3. A API possui listagem autenticada com filtros por cliente e status, consulta detalhada com 404 para ordem inexistente, encerramento via PATCH com `entregue` ou `cancelado` e permanência de ordens encerradas nas consultas.
+
+Foram executados 62 testes na suíte completa e 33 testes no app `service_orders`, todos aprovados. Também passaram Django check, verificação de migrations, Ruff, Ruff format e validação OpenAPI 3.0.3.
+
+### Verificação de conformidade
+
+- Critérios de aceite: 12 de 12 atendidos.
+- Listagem: filtros `customer_id`, `status` e combinação dos dois cobertos.
+- Consulta: sucesso autenticado e ordem inexistente retornando 404 cobertos.
+- Encerramento: status `entregue` e `cancelado` cobertos, mantendo os registros consultáveis.
+- Segurança: TokenAuthentication e IsAuthenticated aplicados; ausência de token retorna 401.
+- OpenAPI: listagem, filtros, consulta, PATCH, `ServiceOrder`, `ServiceOrderStatus` e `TokenAuth` documentados.
+- Migrations: `No changes detected`.
+- CodeRabbit: não executado porque está desabilitado em `.aiox-core/core-config.yaml`.
+
+### Recomendação documental
+
+O Dev Agent Record informa 61 testes, enquanto a validação executou 62 testes na suíte completa. Isso não afeta o código ou o gate, mas o registro pode ser atualizado posteriormente para manter a documentação exata.
+
+### NFR Validation
+
+- Segurança: PASS.
+- Performance: PASS para filtros simples via Django ORM e o escopo do MVP.
+- Confiabilidade: PASS nos cenários de listagem, filtros, consulta, 404, encerramento e autenticação.
+- Manutenibilidade: PASS; Ruff, migrations e OpenAPI estão alinhados e não foram adicionadas camadas artificiais.
+
+### Gate Status
+
+- Gate: **PASS** — `docs/qa/gates/3.3-consulta-e-encerramento-da-ordem.yml`
+- Score: **100/100**
+- Decisão: aprovado.
+
+### Lifecycle Transition
+
+- PASS: Ready for Review → Done.
