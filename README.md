@@ -230,6 +230,39 @@ curl -X POST http://127.0.0.1:8000/api/service-orders/ \
 
 Toda nova ordem de serviço é criada automaticamente com status inicial `recebido`. A API rejeita requisições caso o equipamento informado não pertença ao cliente selecionado (HTTP 400 Bad Request).
 
+### Atualizar ordem de serviço (diagnóstico, orçamento e andamento)
+
+```bash
+curl -X PATCH http://127.0.0.1:8000/api/service-orders/1/ \
+  -H "Authorization: Token <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "em_diagnostico",
+    "diagnosis": "Curto-circuito na placa lógica principal.",
+    "estimated_budget": "350.50",
+    "notes": "Cliente informou que aparelho molhou na chuva."
+  }'
+```
+
+**Exemplo de resposta (HTTP 200 OK):**
+
+```json
+{
+  "id": 1,
+  "customer_id": 1,
+  "equipment_id": 1,
+  "problem_description": "Celular não liga após queda.",
+  "status": "em_diagnostico",
+  "diagnosis": "Curto-circuito na placa lógica principal.",
+  "estimated_budget": "350.50",
+  "notes": "Cliente informou que aparelho molhou na chuva.",
+  "created_at": "2026-08-22T21:45:00-03:00",
+  "updated_at": "2026-08-23T11:55:00-03:00"
+}
+```
+
+A atualização é parcial e aceita os campos `status`, `diagnosis`, `estimated_budget` e `notes`. Os campos de vínculo (`customer_id`, `equipment_id`) e a descrição do problema (`problem_description`) são imutáveis após a abertura.
+
 ---
 
 ## ▶️ Executando a API
