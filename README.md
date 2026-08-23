@@ -2,11 +2,47 @@
 
 API REST para gerenciamento de clientes, equipamentos e ordens de serviço de uma pequena assistência técnica.
 
+> **Status:** MVP concluído e validado para portfólio. O projeto é uma API backend júnior, executada localmente, sem frontend e sem infraestrutura de produção.
+
 ---
 
 ## 📌 Visão Geral
 
-A **TechService API** é desenvolvida em Python com Django e Django REST Framework (DRF), seguindo uma arquitetura de monólito modular. Nesta primeira etapa, a API disponibiliza a fundação executável do projeto, autenticação por token e o cadastro protegido de clientes, além da suíte inicial de testes e das instruções de desenvolvimento local. Os demais domínios de negócio serão implementados nas stories subsequentes.
+A **TechService API** é desenvolvida em Python com Django e Django REST Framework (DRF), seguindo uma arquitetura de monólito modular. O MVP cobre o fluxo principal de uma assistência técnica: autenticar um usuário, cadastrar clientes e equipamentos, abrir uma ordem de serviço, registrar seu andamento, consultar a fila e encerrá-la como entregue ou cancelada.
+
+O projeto foi mantido propositalmente pequeno para demonstrar fundamentos importantes de backend: modelagem relacional, validação de entrada, autenticação por token, endpoints REST, documentação OpenAPI e testes automatizados.
+
+## 🎯 O que este projeto demonstra
+
+- Construção de uma API REST com Django e Django REST Framework.
+- Relacionamentos entre clientes, equipamentos e ordens de serviço.
+- Autenticação com `TokenAuthentication` e proteção das rotas de negócio.
+- Validação de payloads, filtros, status HTTP e respostas JSON de erro.
+- Documentação interativa com Swagger, Redoc e contrato OpenAPI 3.0.3.
+- Testes de API com o banco isolado do Django Test Runner.
+- Organização simples em um monólito modular, sem camadas artificiais.
+
+## 🔄 Fluxo principal para demonstração
+
+1. Criar um usuário local e obter um token.
+2. Cadastrar um cliente e um equipamento vinculado a ele.
+3. Abrir uma ordem de serviço com o problema informado.
+4. Atualizar diagnóstico, orçamento e andamento.
+5. Consultar a ordem e encerrá-la como `entregue` ou `cancelado`.
+
+Esse fluxo pode ser executado pelos exemplos de `curl` deste README ou diretamente pela interface Swagger.
+
+## 📚 Resumo dos endpoints
+
+| Domínio | Operações principais | Autenticação |
+|---|---|---|
+| Saúde | `GET /api/health/` | Pública |
+| Autenticação | `POST /api/auth/token/` | Pública |
+| Clientes | `GET`, `POST /api/customers/`; `GET`, `PATCH /api/customers/{id}/` | Token |
+| Equipamentos | `GET`, `POST /api/equipment/`; `GET`, `PATCH /api/equipment/{id}/` | Token |
+| Ordens de serviço | `GET`, `POST /api/service-orders/`; `GET`, `PATCH /api/service-orders/{id}/` | Token |
+
+O contrato completo, incluindo schemas, filtros e respostas de erro, está disponível no Swagger e no endpoint `/api/schema/`.
 
 ---
 
@@ -382,3 +418,33 @@ ruff check .
 # Formatar o código automaticamente
 ruff format .
 ```
+
+## ✅ Validação do MVP
+
+Validações executadas no projeto:
+
+- `python manage.py test` — 62 testes aprovados.
+- `python manage.py check` — nenhum problema identificado.
+- `python manage.py makemigrations --check --dry-run` — nenhuma migration pendente.
+- `python manage.py spectacular --validate` — contrato OpenAPI válido.
+- `python -m ruff check .` — sem problemas de lint.
+- `python -m ruff format --check .` — arquivos formatados.
+
+## 🚧 Limites atuais
+
+Este é um MVP de portfólio executado localmente. Não fazem parte do escopo atual: frontend, pagamentos, estoque, notificações, anexos, histórico detalhado de status, permissões por papel, multiempresa, filas, Docker obrigatório, CI/CD e deploy público.
+
+Antes de usar a API em produção, seria necessário configurar HTTPS, `DEBUG=False`, uma chave secreta forte, cookies seguros, banco PostgreSQL, backups, monitoramento e controle de acesso adequado ao negócio.
+
+## 💼 Contexto para portfólio e freelas
+
+Este projeto representa uma solução inicial que pode ser adaptada para pequenas assistências técnicas. Ele não pretende ser um SaaS pronto para produção; seu objetivo é demonstrar capacidade de transformar um problema operacional em uma API testada, documentada e explicável.
+
+### Possíveis evoluções comerciais
+
+- Publicar a API em uma plataforma simples com PostgreSQL.
+- Criar uma interface web consumindo o contrato OpenAPI existente.
+- Adicionar usuários, papéis e isolamento por empresa.
+- Incluir notificações, anexos e histórico quando houver requisitos reais.
+
+Essas evoluções devem entrar somente quando houver necessidade de um cliente, mantendo o MVP atual simples e compreensível.
