@@ -217,3 +217,208 @@ class ServiceOrderAPITests(APITestCase):
             self.equipment_1.delete()
 
         self.assertTrue(ServiceOrder.objects.filter(id=so.id).exists())
+
+    def test_update_service_order_all_fields_success(self):
+        """Atualiza com sucesso diagnóstico, orçamento estimado, observações e status da ordem."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Aparelho reiniciando sozinho.",
+            status=ServiceOrderStatus.RECEBIDO,
+        )
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        payload = {
+            "status": "em_diagnostico",
+            "diagnosis": "Curto-circuito na placa lógica principal.",
+            "estimated_budget": "350.50",
+            "notes": "Cliente informou que aparelho molhou na chuva.",
+        }
+        response = self.client.patch(url, payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], so.id)
+        self.assertEqual(response.data["customer_id"], self.customer_1.id)
+        self.assertEqual(response.data["equipment_id"], self.equipment_1.id)
+        self.assertEqual(
+            response.data["problem_description"], "Aparelho reiniciando sozinho."
+        )
+        self.assertEqual(response.data["status"], "em_diagnostico")
+        self.assertEqual(
+            response.data["diagnosis"], "Curto-circuito na placa lógica principal."
+        )
+        self.assertEqual(response.data["estimated_budget"], "350.50")
+        self.assertEqual(
+            response.data["notes"], "Cliente informou que aparelho molhou na chuva."
+        )
+
+        # Valida persistência no banco
+        so.refresh_from_db()
+        self.assertEqual(so.status, ServiceOrderStatus.EM_DIAGNOSTICO)
+        self.assertEqual(so.diagnosis, "Curto-circuito na placa lógica principal.")
+        self.assertEqual(str(so.estimated_budget), "350.50")
+        self.assertEqual(so.notes, "Cliente informou que aparelho molhou na chuva.")
+
+    def test_update_service_order_single_field_success(self):
+        """Atualiza parcialmente apenas um campo sem alterar os outros."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Sem som no alto-falante.",
+            status=ServiceOrderStatus.EM_DIAGNOSTICO,
+            diagnosis="Alto-falante danificado.",
+            estimated_budget="120.00",
+            notes="Aguardando peça de reposição.",
+        )
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        response = self.client.patch(url, {"status": "em_conserto"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "em_conserto")
+        self.assertEqual(response.data["diagnosis"], "Alto-falante danificado.")
+        self.assertEqual(response.data["estimated_budget"], "120.00")
+        self.assertEqual(response.data["notes"], "Aguardando peça de reposição.")
+
+        so.refresh_from_db()
+        self.assertEqual(so.status, ServiceOrderStatus.EM_CONSERTO)
+        self.assertEqual(so.diagnosis, "Alto-falante danificado.")
+        self.assertEqual(str(so.estimated_budget), "120.00")
+        self.assertEqual(so.notes, "Aguardando peça de reposição.")
+
+    def test_update_service_order_immutable_fields_are_ignored(self):
+        """Garante que customer_id, equipment_id e problem_description não são alterados via PATCH."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Descrição original do problema.",
+            status=ServiceOrderStatus.RECEBIDO,
+        )
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        payload = {
+            "customer_id": self.customer_2.id,
+            "equipment_id": self.equipment_2.id,
+            "problem_description": "Tentativa indevida de alterar a descrição.",
+            "status": "aguardando_aprovacao",
+        }
+        response = self.client.patch(url, payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["customer_id"], self.customer_1.id)
+        self.assertEqual(response.data["equipment_id"], self.equipment_1.id)
+        self.assertEqual(
+            response.data["problem_description"], "Descrição original do problema."
+        )
+        self.assertEqual(response.data["status"], "aguardando_aprovacao")
+
+        so.refresh_from_db()
+        self.assertEqual(so.customer_id, self.customer_1.id)
+        self.assertEqual(so.equipment_id, self.equipment_1.id)
+        self.assertEqual(so.problem_description, "Descrição original do problema.")
+        self.assertEqual(so.status, ServiceOrderStatus.AGUARDANDO_APROVACAO)
+
+    def test_update_service_order_invalid_status_fails(self):
+        """Rejeita atualização com status inválido e não altera o banco de dados."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Troca de bateria.",
+            status=ServiceOrderStatus.RECEBIDO,
+        )
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        response = self.client.patch(
+            url, {"status": "status_inexistente"}, format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("errors", response.data)
+        self.assertIn("status", response.data["errors"])
+
+        so.refresh_from_db()
+        self.assertEqual(so.status, ServiceOrderStatus.RECEBIDO)
+
+    def test_update_service_order_negative_budget_fails(self):
+        """Rejeita orçamento negativo e preserva o estado anterior."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Conector solto.",
+            status=ServiceOrderStatus.RECEBIDO,
+            estimated_budget="100.00",
+        )
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        response = self.client.patch(url, {"estimated_budget": "-50.00"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("errors", response.data)
+        self.assertIn("estimated_budget", response.data["errors"])
+
+        so.refresh_from_db()
+        self.assertEqual(str(so.estimated_budget), "100.00")
+
+    def test_update_service_order_nonexistent_order_fails(self):
+        """Retorna HTTP 404 quando o identificador da ordem não existe."""
+        url = reverse("service-order-detail", kwargs={"pk": 999999})
+        response = self.client.patch(url, {"status": "em_diagnostico"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("detail", response.data)
+
+    def test_update_service_order_unauthenticated_fails(self):
+        """Rejeita atualização sem autenticação com HTTP 401 Unauthorized."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Troca de display.",
+            status=ServiceOrderStatus.RECEBIDO,
+        )
+        self.client.credentials()  # Remove token
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        response = self.client.patch(url, {"status": "em_diagnostico"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        so.refresh_from_db()
+        self.assertEqual(so.status, ServiceOrderStatus.RECEBIDO)
+
+    def test_update_service_order_nullable_fields_success(self):
+        """Permite definir campos opcionais como nulos."""
+        so = ServiceOrder.objects.create(
+            customer=self.customer_1,
+            equipment=self.equipment_1,
+            problem_description="Troca de display.",
+            status=ServiceOrderStatus.EM_DIAGNOSTICO,
+            diagnosis="Display danificado.",
+            estimated_budget="200.00",
+            notes="Avisar cliente por telefone.",
+        )
+        url = reverse("service-order-detail", kwargs={"pk": so.id})
+        payload = {
+            "diagnosis": None,
+            "estimated_budget": None,
+            "notes": None,
+        }
+        response = self.client.patch(url, payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["diagnosis"])
+        self.assertIsNone(response.data["estimated_budget"])
+        self.assertIsNone(response.data["notes"])
+
+        so.refresh_from_db()
+        self.assertIsNone(so.diagnosis)
+        self.assertIsNone(so.estimated_budget)
+        self.assertIsNone(so.notes)
+
+    def test_openapi_schema_contains_patch_service_orders(self):
+        """Valida que o schema OpenAPI documenta a rota PATCH /api/service-orders/{id}/."""
+        schema_url = reverse("schema")
+        response = self.client.get(schema_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        schema_data = response.data
+        self.assertIn("/api/service-orders/{id}/", schema_data["paths"])
+        patch_op = schema_data["paths"]["/api/service-orders/{id}/"]["patch"]
+        self.assertEqual(patch_op["summary"], "Atualizar ordem de serviço")
+        self.assertIn("200", patch_op["responses"])
+        self.assertIn("400", patch_op["responses"])
+        self.assertIn("401", patch_op["responses"])
+        self.assertIn("404", patch_op["responses"])
+        self.assertEqual(patch_op["security"], [{"TokenAuth": []}])

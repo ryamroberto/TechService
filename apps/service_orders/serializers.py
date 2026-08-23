@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from apps.customers.models import Customer
@@ -61,6 +63,43 @@ class ServiceOrderInputSerializer(serializers.ModelSerializer):
         # Abertura sempre inicializa com status 'recebido'
         validated_data["status"] = ServiceOrderStatus.RECEBIDO
         return super().create(validated_data)
+
+
+class ServiceOrderUpdateInputSerializer(serializers.ModelSerializer):
+    """Valida os dados aceitos na atualização parcial de ordens de serviço."""
+
+    status = serializers.ChoiceField(
+        choices=ServiceOrderStatus.choices,
+        required=False,
+        error_messages={
+            "invalid_choice": "Status informado é inválido.",
+        },
+    )
+    diagnosis = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+    estimated_budget = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+        min_value=Decimal("0.00"),
+        error_messages={
+            "min_value": "O orçamento estimado não pode ser negativo.",
+            "invalid": "O orçamento estimado deve ser um valor numérico válido.",
+        },
+    )
+    notes = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+
+    class Meta:
+        model = ServiceOrder
+        fields = ("status", "diagnosis", "estimated_budget", "notes")
 
 
 class ServiceOrderSerializer(serializers.ModelSerializer):
