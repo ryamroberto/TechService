@@ -194,6 +194,44 @@ O campo `identifier` é opcional. A descrição do problema não pertence ao equ
 
 ---
 
+## 📋 Ordens de Serviço
+
+As operações de ordens de serviço exigem o header `Authorization: Token <token>`. A abertura de ordem vincula um cliente e um equipamento (que deve pertencer ao cliente informado) e registra o problema relatado.
+
+### Abrir ordem de serviço
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/service-orders/ \
+  -H "Authorization: Token <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_id": 1,
+    "equipment_id": 1,
+    "problem_description": "Celular não liga após queda."
+  }'
+```
+
+**Exemplo de resposta (HTTP 201 Created):**
+
+```json
+{
+  "id": 1,
+  "customer_id": 1,
+  "equipment_id": 1,
+  "problem_description": "Celular não liga após queda.",
+  "status": "recebido",
+  "diagnosis": null,
+  "estimated_budget": null,
+  "notes": null,
+  "created_at": "2026-08-22T21:45:00-03:00",
+  "updated_at": "2026-08-22T21:45:00-03:00"
+}
+```
+
+Toda nova ordem de serviço é criada automaticamente com status inicial `recebido`. A API rejeita requisições caso o equipamento informado não pertença ao cliente selecionado (HTTP 400 Bad Request).
+
+---
+
 ## ▶️ Executando a API
 
 Inicie o servidor de desenvolvimento:

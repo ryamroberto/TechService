@@ -980,16 +980,16 @@ Usuário padrão do Django, usado para autenticação por token. O MVP não cria
 
 | Campo | Tipo conceitual | Regras |
 |---|---|---|
-| `id` | inteiro | Chave primária |
-| `customer_id` | inteiro | FK obrigatória para `customers.id` |
-| `equipment_id` | inteiro | FK obrigatória para `equipment.id` |
-| `problem_description` | texto longo | Obrigatório |
-| `status` | texto curto/enumerado | Obrigatório; inicia em `recebido` |
-| `diagnosis` | texto longo | Opcional |
-| `estimated_budget` | decimal(10,2) | Opcional; quando informado, deve ser maior ou igual a zero |
-| `notes` | texto longo | Opcional |
-| `created_at` | data/hora | Preenchido automaticamente |
-| `updated_at` | data/hora | Atualizado automaticamente |
+| `id` | inteiro | Chave primária (`BigAutoField`) |
+| `customer_id` | inteiro | FK obrigatória para `customers.id` (`on_delete=models.PROTECT`) |
+| `equipment_id` | inteiro | FK obrigatória para `equipment.id` (`on_delete=models.PROTECT`) |
+| `problem_description` | texto longo | Obrigatório (`TextField`) |
+| `status` | texto curto/enumerado | Obrigatório (`CharField(max_length=25)`); inicia em `recebido` |
+| `diagnosis` | texto longo | Opcional (`TextField`, `blank=True, null=True`) |
+| `estimated_budget` | decimal(10,2) | Opcional; quando informado, deve ser >= 0 (`CheckConstraint`) |
+| `notes` | texto longo | Opcional (`TextField`, `blank=True, null=True`) |
+| `created_at` | data/hora | Preenchido automaticamente (`auto_now_add=True`) |
+| `updated_at` | data/hora | Atualizado automaticamente (`auto_now=True`) |
 
 ### Relacionamentos e regras
 
@@ -997,17 +997,28 @@ Usuário padrão do Django, usado para autenticação por token. O MVP não cria
 - Um cliente pode possuir várias ordens de serviço.
 - Um equipamento pode aparecer em várias ordens de serviço ao longo do tempo.
 - A ordem mantém `customer_id` e `equipment_id` para atender ao contrato da API e facilitar consultas do atendimento.
-- Ao criar ou atualizar uma ordem, a aplicação deve confirmar que o equipamento pertence ao cliente informado. Não será usado trigger ou regra SQL específica para isso no MVP.
-- Os status permitidos são `recebido`, `em_diagnostico`, `aguardando_aprovacao`, `em_conserto`, `pronto`, `entregue` e `cancelado`.
-- Clientes e equipamentos não terão endpoints de exclusão no MVP. Caso a exclusão seja necessária futuramente, a recomendação inicial é impedir a remoção de registros que possuam ordens relacionadas (`PROTECT`/restrição equivalente).
+- **Estratégia de `on_delete` validada pelo `@data-engineer`:** `models.PROTECT` para `customer` e `equipment`. Impede a exclusão de clientes ou equipamentos que possuam ordens de serviço ativas ou históricas, garantindo integridade transacional e preservação de auditoria.
+- Ao criar ou atualizar uma ordem, a aplicação deve confirmar que o equipamento pertence ao cliente informado (`validate()` no serializer).
+- Os status permitidos são `recebido`, `em_diagnostico`, `aguardando_aprovacao`, `em_conserto`, `pronto`, `entregue` e `cancelado` (`ServiceOrderStatus.choices`).
 
-### Índices mínimos recomendados
+### Constraints e integridade no banco (validadas pelo `@data-engineer`)
 
-O agente `@data-engineer` deve validar os índices durante a implementação. Como ponto de partida, considerar índices para `equipment.customer_id`, `service_orders.customer_id`, `service_orders.equipment_id` e `service_orders.status`, pois esses campos participam de relacionamentos e filtros previstos no MVP.
+1. **`service_order_estimated_budget_non_negative`**: `CHECK (estimated_budget >= 0.00 OR estimated_budget IS NULL)`
+2. **`service_order_status_valid`**: `CHECK (status IN ('recebido', 'em_diagnostico', 'aguardando_aprovacao', 'em_conserto', 'pronto', 'entregue', 'cancelado'))`
 
-### Limites desta seção
+### Estratégia de índices (validada pelo `@data-engineer`)
 
-Este documento não implementa DDL, `models.py`, migration ou seed de dados. Também não define auditoria, soft delete, histórico de status, particionamento ou otimizações de escala. Essas decisões permanecem fora do escopo júnior até que exista uma necessidade concreta.
+1. **Chaves estrangeiras:** O Django indexa automaticamente `customer_id` e `equipment_id` (`db_index=True`).
+2. **`so_status_idx`:** Índice no campo `status` para consultas de fila/painel global.
+3. **`so_customer_status_idx`:** Índice composto `(customer, status)` para otimizar filtros por cliente e estado (Story 3.3).
+4. **`so_created_at_desc_idx`:** Índice no campo `-created_at` para listagens cronológicas ordenadas (`ordering = ("-created_at", "-id")`).
+
+### Plano de migration e reversibilidade
+
+- **App:** `apps/service_orders/`
+- **Migration inicial:** `0001_initial.py`
+- **Dependências:** `("customers", "0001_initial")` e `("equipment", "0001_initial")`
+- **Reversibilidade:** Atômica (`atomic = True`) e totalmente reversível com `python manage.py migrate service_orders zero`.
 
 ## Estrutura de pastas
 

@@ -22,6 +22,8 @@ urlpatterns = [
     path("api/customers/", include("apps.customers.urls")),
     # Rotas protegidas de equipamentos
     path("api/equipment/", include("apps.equipment.urls")),
+    # Rotas protegidas de ordens de serviço
+    path("api/service-orders/", include("apps.service_orders.urls")),
     # Documentação OpenAPI
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
