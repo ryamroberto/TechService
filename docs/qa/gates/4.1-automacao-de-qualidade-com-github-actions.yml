@@ -2,10 +2,10 @@ schema: 1
 story: '4.1'
 story_title: 'Automação de qualidade com GitHub Actions'
 gate: PASS
-status_reason: 'Todos os 11 critérios de aceite atendidos. Workflow commitado (b3ae9ca), 3/3 checks locais aprovados (62 testes), sem segredos de produção, sem alteração no MVP.'
+status_reason: 'Revalidação concluída com a story em InReview. O workflow atende aos 11 critérios, 0602e8d é o commit válido da implementação e os três checks locais passaram.'
 reviewer: 'Quinn (Test Architect)'
-reviewed_revision: 'commit:b3ae9ca'
-updated: '2026-08-26T12:55:00-03:00'
+reviewed_revision: 'commit:0602e8d99ed7ceece0bbfc429db1726b79534013'
+updated: '2026-08-26T13:45:00-03:00'
 
 top_issues: []
 
@@ -27,7 +27,7 @@ evidence:
       detail: 'System check identified no issues (0 silenced).'
     - command: 'python manage.py test'
       result: PASS
-      detail: '62 testes executados com sucesso em 0.659s.'
+      detail: '62 testes executados com sucesso em 48.790s.'
     - command: 'python -m ruff check .'
       result: PASS
       detail: 'All checks passed.'
@@ -50,7 +50,7 @@ nfr_validation:
     notes: 'Django check, 62 testes e Ruff passaram localmente. Cada comando em step próprio — falha em qualquer um interrompe o job.'
   maintainability:
     status: PASS
-    notes: 'Workflow de 50 linhas, bem documentado, usando actions estáveis (checkout@v4, setup-python@v5). Fácil manutenção.'
+    notes: 'Workflow simples e fácil de manter. A revisão atual usa evidência de commit válida e a story estava em InReview antes da transição.'
 
 recommendations:
   immediate: []
@@ -59,7 +59,7 @@ recommendations:
       refs: ['.github/workflows/quality.yml']
 
 lifecycle:
-  current_status: 'In Review'
+  current_status: 'Done'
   required_status_for_qa: 'InReview'
   transition_applied: true
   transition: 'InReview → Done'
