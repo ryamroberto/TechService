@@ -1,0 +1,46 @@
+# =============================================================================
+# TechService API — .dockerignore
+# Story 4.2: Execução local com Docker
+# =============================================================================
+
+# Controle de versão e CI
+.git/
+.gitignore
+.github/
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+ENV/
+
+# Python & caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Segredos e variáveis de ambiente locais
+.env
+.env.*
+!.env.example
+
+# Banco de dados local SQLite
+db.sqlite3
+db.sqlite3-journal
+
+# IDEs e sistema operacional
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Artefatos auxiliares e frameworks
+.aiox-core/
+.ai/
+.agents/
+LinkedIn/
