@@ -1,7 +1,7 @@
 # TechService API — Documento de Requisitos do Produto (PRD)
 
-> Status: Pronto para arquitetura  
-> Versão: 0.7  
+> Status: MVP aprovado; Épico 4.1 concluído; Stories 4.2 e 4.3 adiadas
+> Versão: 0.9
 > Data: 22/08/2026  
 > Tipo de projeto: Projeto de portfólio para desenvolvedor freelancer júnior
 
@@ -53,6 +53,8 @@ Ainda não existe um documento inicial do projeto ou documento de pesquisa com u
 | 22/08/2026 | 0.5 | Aprovação do Épico 2 e detalhamento inicial do Épico 3 | Morgan (PM) |
 | 22/08/2026 | 0.6 | Aprovação do Épico 3 e conclusão da estrutura principal do PRD | Morgan (PM) |
 | 22/08/2026 | 0.7 | Execução do checklist do PM e aprovação para a fase de arquitetura | Morgan (PM) |
+| 26/08/2026 | 0.8 | Inclusão do Épico 4 pós-MVP sem alteração do escopo original | Morgan (PM) |
+| 26/08/2026 | 0.9 | Adiamento das Stories 4.2 e 4.3 por decisão de escopo; MVP e Story 4.1 preservados | Morgan (PM) |
 
 ## Requisitos
 
@@ -115,6 +117,62 @@ Permitir o cadastro, consulta e atualização de clientes e equipamentos, manten
 ### Épico 3 — Ordens de serviço e acompanhamento
 
 Permitir criar ordens de serviço, atualizar status, registrar diagnóstico, orçamento, observações e consultar ordens por cliente ou status.
+
+### Épico 4 — Preparação de execução e publicação (pós-MVP)
+
+> Este épico é uma evolução posterior ao MVP. Ele prepara o projeto para ser executado e demonstrado de forma mais reproduzível, sem alterar as funcionalidades, requisitos ou limites do MVP original.
+
+#### Objetivo do épico
+
+Preparar a TechService API para execução local padronizada, validação automatizada e publicação simples, mantendo o monólito Django/DRF adequado ao nível júnior do projeto.
+
+#### Decisão de escopo atual
+
+Por decisão de escopo de 26/08/2026, o projeto seguirá somente com a Story 4.1 — Automação de qualidade com GitHub Actions, já concluída. A Story 4.2 — Execução local com Docker está **adiada**, e a Story 4.3 — PostgreSQL opcional e documentação de publicação **não será executada neste momento**. Essa decisão não altera o MVP original, os Épicos 1, 2 e 3, nem a Story 4.1.
+
+Docker, PostgreSQL opcional e preparação de publicação permanecem como possibilidades futuras, sem serem requisitos da entrega atual.
+
+#### Dependências
+
+- Épicos 1, 2 e 3 concluídos e validados.
+- O fluxo de negócio do MVP deve permanecer estável.
+- Nenhuma alteração de endpoint, modelo, autenticação ou regra de negócio é necessária para este épico.
+
+#### Escopo do épico
+
+- Criar um workflow do GitHub Actions para executar `python manage.py check`, `python manage.py test` e `python -m ruff check .` em alterações enviadas ao repositório e em Pull Requests.
+- Adicionar uma configuração básica de Docker para executar a aplicação localmente.
+- Permitir o uso opcional de PostgreSQL para um cenário de publicação, mantendo SQLite como banco padrão do desenvolvimento.
+- Atualizar o README com instruções de execução local, Docker, PostgreSQL opcional e publicação simples.
+
+#### Stories previstas
+
+- **Story 4.1 — Automação de qualidade com GitHub Actions:** executar verificações, testes e lint no CI. **Concluída.**
+- **Story 4.2 — Execução local com Docker:** disponibilizar uma imagem e uma configuração simples para iniciar a API. **Adiada.**
+- **Story 4.3 — PostgreSQL opcional e documentação de publicação:** documentar a configuração alternativa de banco e o processo básico de publicação. **Não será executada neste momento.**
+
+#### Critérios de sucesso
+
+1. Os 62 testes existentes continuam passando sem alteração do comportamento do MVP.
+2. As verificações `check`, testes automatizados e Ruff passam localmente e no GitHub Actions.
+3. A imagem Docker é construída e a aplicação inicia seguindo comandos documentados.
+4. A configuração padrão com SQLite continua funcionando sem Docker ou PostgreSQL.
+5. O README permite reproduzir a execução local e compreender a preparação para uma publicação simples.
+6. Nenhum segredo ou credencial é versionado no repositório.
+
+Os critérios relacionados a Docker e publicação permanecem associados às Stories 4.2 e 4.3 e não fazem parte da entrega atual. O funcionamento local com SQLite, sem Docker ou PostgreSQL, continua sendo suficiente para o MVP.
+
+#### Limites do épico
+
+- Não adicionar funcionalidades de negócio.
+- Não alterar endpoints, modelos, autenticação, regras de validação ou fluxo das ordens de serviço.
+- Não incluir Kubernetes, microsserviços, Redis, Celery, filas, observabilidade avançada ou deploy automático.
+- Não incluir escalabilidade empresarial, multi-tenancy, pagamentos, notificações ou novos módulos de domínio.
+- O deploy real não faz parte deste épico; o objetivo é preparar e documentar uma publicação simples.
+
+#### Governança das stories
+
+As stories detalhadas devem ser criadas pelo `@sm`, validadas pelo `@po`, implementadas pelo `@dev` e verificadas pelo `@qa`. Operações de commit, push ou Pull Request devem ser realizadas somente pelo `@devops`.
 
 ## Detalhes do Épico 1 — Fundação da API e autenticação
 
