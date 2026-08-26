@@ -1,0 +1,49 @@
+# =============================================================================
+# TechService API — Quality Gate Workflow
+# Story 4.1: Automação de qualidade com GitHub Actions
+#
+# Executa verificações de qualidade em push e pull_request:
+#   1. python manage.py check   — validação do sistema Django
+#   2. python manage.py test    — suíte de testes automatizados
+#   3. python -m ruff check .   — lint e qualidade de código
+#
+# Ambiente: Python 3.13, SQLite (padrão do Django), sem Docker/PostgreSQL.
+# Nenhum segredo de produção é utilizado — apenas valores não produtivos.
+# =============================================================================
+
+name: Quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    name: Check, Test & Lint
+    runs-on: ubuntu-latest
+
+    env:
+      SECRET_KEY: "django-insecure-ci-only-not-for-production"
+      DEBUG: "True"
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Run tests
+        run: python manage.py test
+
+      - name: Ruff lint
+        run: python -m ruff check .
